@@ -11,8 +11,8 @@ distances = gen_distances(points_nubmer, 100)
 
 
 population_number = 10  # number of solutions
-iterations = 100
-selected_spots_number = 5
+iterations = 10000
+selected_spots_number = 10
 
 best_solution_bees = 10
 
@@ -25,12 +25,13 @@ solutions = sorted([(get_distance_sum(s, distances), s) for s in solutions])
 def get_best_modified_solution(solution):
     modified_solutions = [modify_solution(solution[1]) for _ in range(best_solution_bees)]
     modified_solution_fitness = sorted([(get_distance_sum(s, distances), s) for s in modified_solutions]
-                                       + [(get_distance_sum(solution[1], distances), solution[1])])
+                                       + [solution])
     return modified_solution_fitness[0]
 
 
 while iterations > 0:
     print("Fitness: {}".format(solutions[0][0]))
+
     selected_spots = solutions[0:selected_spots_number]
     new_solutions = [get_best_modified_solution(s) for s in selected_spots]
 
