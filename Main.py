@@ -30,6 +30,7 @@ def get_best_modified_solution(solution):
 
 
 while iterations > 0:
+    print("Fitness: {}".format(solutions[0][0]))
     selected_spots = solutions[0:selected_spots_number]
     new_solutions = [get_best_modified_solution(s) for s in selected_spots]
 
@@ -37,7 +38,7 @@ while iterations > 0:
                         for _ in range(population_number-selected_spots)]
     random_solutions = [(get_distance_sum(s, distances), s) for s in random_solutions]
 
-    solutions = new_solutions + random_solutions
+    solutions = sorted(new_solutions + random_solutions)
 
     iterations -= 1
 
