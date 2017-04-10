@@ -41,11 +41,16 @@ def modify_solution(solution, points_number, distances):
             salesman.insert(point_index, point)
             cost = get_distance_sum(solution, distances)
             if cost < initial_cost:
+                print "Found better solution"
                 return  # found a better solution - done
             del salesman[point_index]
 
     # no insert makes the solution better - insert randomly
     rand_salesman = random.randint(0, len(solution) - 1)
     salesman = solution[rand_salesman]
-    rand_index = random.randint(0, len(salesman) - 1)
+    if len(salesman) > 0:
+        rand_index = random.randint(0, len(salesman) - 1)
+    else:
+        rand_index = 0
     salesman.insert(rand_index, point)
+    print "Inserting randomly"
