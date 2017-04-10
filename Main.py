@@ -23,9 +23,9 @@ solutions = sorted([(get_distance_sum(s, distances), s) for s in solutions])
 
 
 def get_best_modified_solution(solution):
-    modified_solutions = [modify_solution(solution) for _ in range(best_solution_bees)]
+    modified_solutions = [modify_solution(solution[1]) for _ in range(best_solution_bees)]
     modified_solution_fitness = sorted([(get_distance_sum(s, distances), s) for s in modified_solutions]
-                                       + [(get_distance_sum(solution, distances), solution)])
+                                       + [(get_distance_sum(solution[1], distances), solution[1])])
     return modified_solution_fitness[0]
 
 
@@ -35,7 +35,7 @@ while iterations > 0:
     new_solutions = [get_best_modified_solution(s) for s in selected_spots]
 
     random_solutions = [gen_random_solutions(points_nubmer, vehicles_number)
-                        for _ in range(population_number-selected_spots)]
+                        for _ in range(population_number-selected_spots_number)]
     random_solutions = [(get_distance_sum(s, distances), s) for s in random_solutions]
 
     solutions = sorted(new_solutions + random_solutions)
