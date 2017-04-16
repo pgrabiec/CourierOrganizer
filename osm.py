@@ -27,8 +27,8 @@ def create_graph_from_osm_map(map_data):
         nodes_set.add(way_nodes[-1])
 
     nodes_set = nodes_set.union({node for node, count in node_counts.items() if count > 1})
-    nodes = [{'type': 'Point', 'coordinates': (node['data']['lat'], node['data']['lon'])}
-             for node in map_nodes if node['data']['id'] in nodes_set]  # GeoPoint format
+    nodes = [(node['data']['lat'], node['data']['lon'])
+             for node in map_nodes if node['data']['id'] in nodes_set]
 
     # TODO: replace mock, calculate distances_matrix properly
     distances_matrix = [[] for _ in range(len(nodes))]

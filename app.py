@@ -1,16 +1,13 @@
 import osmapi
 
-from pymodm import connect
 from flask import Flask, jsonify
 from webargs import fields
 from webargs.flaskparser import use_args
 
 from algorithm.core import calculate_vehicle_routes
-from models import Graph
+from models import Graph, GraphNode
 from osm import create_graph_from_osm_map
 
-
-connect("mongodb://localhost:27017/courierOrganizer")
 
 app = Flask(__name__)
 
@@ -18,21 +15,30 @@ app = Flask(__name__)
 @app.route("/graphs/<graph_id>/routes", methods=['post'])
 @use_args({
     'vehicles_number': fields.Int(required=True),
-    'target_points': fields.List(fields.Float, required=True),
+    'target_points': fields.List(fields.Float, required=True), # TODO: fix target points list validation
 })
 def calculate_route(args, graph_id):
     graph = Graph.objects.get({'_id': graph_id})
 
-    # TODO: add function which matches target_points with specific points in graph
     vehicles_number = args['vehicles_number']
-    target_points = []
+    target_points = args['target_points']
 
-    solution = calculate_vehicle_routes(target_points, vehicles_number, graph.distances_matrix)
+    nodes_to_points = {}
+    target_nodes = []
+
+    for latitude, longitude in target_points:
+        node = graph.get_nearest_node(latitude, longitude)
+        nodes_to_points[node.index] = (latitude, longitude)
+        target_nodes.append(node.index)
+
+    solution = calculate_vehicle_routes(target_nodes, vehicles_number,
+                                        graph.distances_matrix)
 
     return jsonify({
         'iterations': solution['iterations'],
         'cost': solution['cost'],
-        'routes': []  # TODO: map graph points to map points
+        'routes': [[nodes_to_points[node] for node in route]
+                   for route in solution['routes']]
     })
 
 
@@ -63,8 +69,12 @@ def create_graph(args):
 
     nodes, distances_matrix = create_graph_from_osm_map(osm_map_data)
 
-    graph = Graph(boundary=args, nodes=nodes, distances_matrix=distances_matrix)
+    graph = Graph(boundary=args, distances_matrix=distances_matrix)
     graph.save()
+
+    graph_nodes = [GraphNode(point={'type': 'Point', 'coordinates': coordinates}, graph=graph,
+                             index=index) for index, coordinates in enumerate(nodes)]
+    GraphNode.objects.bulk_create(graph_nodes)
 
     return jsonify({
         'graph_id': str(graph.pk),

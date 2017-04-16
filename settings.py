@@ -1,4 +1,6 @@
 
+MONGODB_URI = "mongodb://localhost:27017/courierOrganizer"
+
 BEST_SPOTS_NUMBER = 10
 GOOD_SPOTS_NUMBER = 5
 RANDOM_SPOTS_NUMBER = 3

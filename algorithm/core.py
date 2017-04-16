@@ -1,3 +1,4 @@
+import copy
 import random
 
 from settings import (
@@ -34,15 +35,15 @@ def calculate_vehicle_routes(target_points,
         return sum(sum(distances_matrix[i][j] for i, j in zip(vehicle[:-1], vehicle[1:]))
                    for vehicle in solution)
 
-    def get_random_solution(points_number):
+    def get_random_solution(points):
         """
 
         :param points_number:
         :return: Ran
         """
-        points = list(range(1, points_number))
+        points = copy.copy(points)
         random.shuffle(points)
-        return [points[r[0]:r[1]] for r in random_ranges(vehicles_number, points_number)]
+        return [points[r[0]:r[1]] for r in random_ranges(vehicles_number, len(points))]
 
     def get_cost_solution_pair(solution):
         return get_solution_cost(solution), solution
@@ -56,14 +57,13 @@ def calculate_vehicle_routes(target_points,
         """
         cost, solution = cost_solution_pair
         return min([get_cost_solution_pair(modify_solution(solution,
-                                                           points_number,
+                                                           len(target_points),
                                                            get_solution_cost))
                     for _ in range(search_size)] + [cost_solution_pair])
 
-    points_number = len(target_points)
     iterations = 0
 
-    cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(points_number))
+    cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(target_points))
                                  for _ in range(POPULATION_NUMBER)])
 
     for i in range(MAX_ITERATIONS_NUMBER):
@@ -76,7 +76,7 @@ def calculate_vehicle_routes(target_points,
                             for spot in best_spots]
         good_spots_pairs = [get_best_from_neighbourhood(spot, GOOD_SPOT_BEES)
                             for spot in good_spots]
-        random_spots_pairs = [get_cost_solution_pair(get_random_solution(points_number))
+        random_spots_pairs = [get_cost_solution_pair(get_random_solution(target_points))
                               for _ in range(RANDOM_SPOTS_NUMBER)]
 
         cost_solution_pairs = sorted(best_spots_pairs + good_spots_pairs + random_spots_pairs)

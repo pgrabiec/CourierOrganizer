@@ -1,16 +1,51 @@
-from pymodm import MongoModel, fields
-from pymodm.errors import ValidationError
+import settings
+
+from cached_property import cached_property
+from pymodm import MongoModel, fields, connect
+from pymongo import IndexModel, GEOSPHERE
+
+connect(settings.MONGODB_URI)
 
 
 class Graph(MongoModel):
 
-    nodes = fields.ListField(fields.PointField())
     distances_matrix = fields.ListField(fields.ListField(fields.IntegerField()))
     boundary = fields.DictField()
 
-    def clean(self):
-        nodes_count = len(self.nodes)
+    @cached_property
+    def nodes(self):
+        return GraphNode.objects.raw({'graph': self.pk})
 
-        if (nodes_count != len(self.distances_matrix)
-                and nodes_count != len(self.distances_matrix[0])):
-            raise ValidationError('Invalid size of distances matrix')
+    def get_nearest_node(self, latitude, longitude, max_distance=3000, min_distance=0):
+        """
+
+        :param latitude:
+        :param longitude:
+        :param max_distance:
+        :param min_distance:
+        :return:
+        """
+        return GraphNode.objects.raw(
+            {
+                'graph': self.pk,
+                'point': {
+                    '$near': {
+                        '$geometry': {
+                            'type': 'Point',
+                            'coordinates': [latitude, longitude],
+                        },
+                        '$minDistance': min_distance,
+                        '$maxDistance': max_distance,
+                    }
+                }
+            }
+        ).first()
+
+
+class GraphNode(MongoModel):
+    graph = fields.ReferenceField(Graph)
+    index = fields.IntegerField()
+    point = fields.PointField()
+
+    class Meta:
+        indexes = [IndexModel([('point', GEOSPHERE)])]
