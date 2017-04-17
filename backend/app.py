@@ -1,27 +1,34 @@
+from bson import ObjectId
+from bson.errors import InvalidId
 import osmapi
 
 from flask import Flask, jsonify
 from webargs import fields
-from webargs.flaskparser import use_args
+from webargs.flaskparser import use_args, use_kwargs
 
 from algorithm.core import calculate_vehicle_routes
 from models import Graph, GraphNode
 from osm import create_graph_from_osm_map
 
-
 app = Flask(__name__)
 
 
 @app.route("/graphs/<graph_id>/routes", methods=['post'])
-@use_args({
+@use_kwargs({
     'vehicles_number': fields.Int(required=True),
-    'target_points': fields.List(fields.Float, required=True), # TODO: fix target points list validation
+    'target_points': fields.List(fields.Nested({
+        'latitude': fields.Float(required=True),
+        'longitude': fields.Float(required=True),
+    }), required=True)
 })
-def calculate_route(args, graph_id):
-    graph = Graph.objects.get({'_id': graph_id})
+def calculate_route(graph_id, vehicles_number, target_points):
+    try:
+        graph = Graph.objects.get({'_id': ObjectId(graph_id)})
+    except (Graph.DoesNotExist, InvalidId):
+        return jsonify({'error': 'not found'}), 404
 
-    vehicles_number = args['vehicles_number']
-    target_points = args['target_points']
+    target_points = [(point['latitude'], point['longitude'])
+                     for point in target_points]
 
     nodes_to_points = {}
     target_nodes = []
@@ -47,7 +54,7 @@ def list_graphs():
     return jsonify({
         'graphs': [{'id': str(graph.pk),
                     'boundary': graph.boundary,
-                    'nodes_count': len(graph.nodes)
+                    'nodes_count': graph.nodes.count(),
                     } for graph in Graph.objects.all()]
     })
 
@@ -64,8 +71,12 @@ def create_graph(args):
 
     """
     api = osmapi.OsmApi()
-    osm_map_data = api.Map(args['min_longitude'], args['min_latitude'],
-                           args['max_longitude'], args['max_latitude'])
+
+    try:
+        osm_map_data = api.Map(args['min_longitude'], args['min_latitude'],
+                               args['max_longitude'], args['max_latitude'])
+    except osmapi.ApiError as e:
+        return jsonify({'error': str(e)}), 400
 
     nodes, distances_matrix = create_graph_from_osm_map(osm_map_data)
 
@@ -78,7 +89,7 @@ def create_graph(args):
 
     return jsonify({
         'graph_id': str(graph.pk),
-    })
+    }), 201
 
 
 @app.route('/graphs/<graph_id>', methods=['delete'])
@@ -90,8 +101,8 @@ def delete_graph(graph_id):
         Graph.objects.get({'_id': graph_id}).delete()
         return jsonify({'status': 'success'}), 200
     except Graph.DoesNotExist:
-        return jsonify({'status': 'not found'}), 404
+        return jsonify({'error': 'not found'}), 404
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True, host='0.0.0.0')
