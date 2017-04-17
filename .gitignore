@@ -1,1 +1,4 @@
 .idea/
+.virtualenv
+__pycache__
+*.pyc
