@@ -10,6 +10,9 @@ function init() {
     map.addLayer(markers);
     map.addLayer(mapnik);
 
+    var vector_layer = new OpenLayers.Layer.Vector();
+    map.addLayer(vector_layer);
+
     OpenLayers.Control.Click = OpenLayers.Class(OpenLayers.Control, {
         defaultHandlerOptions: {
             'single': true,
@@ -97,6 +100,24 @@ function init() {
         createGraph(getArea());
     });
 
+    function createPolygon(route){
+        var points = [];
+        var proj1 = new OpenLayers.Projection("EPSG:4326");
+        var proj2 = new OpenLayers.Projection("EPSG:900913");
+        var siteStyle = {
+        };
+        for (var i = 0; i < route.length; i++){
+            var point = new OpenLayers.Geometry.Point(route[i][1], route[i][0]);
+            point.transform(proj1, proj2);
+            points.push(point);
+            console.log(point);
+        }
+        var linearRing = new OpenLayers.Geometry.LinearRing(points);
+        var geometry = new OpenLayers.Geometry.Polygon([linearRing]);
+        var polygonFeature = new OpenLayers.Feature.Vector(geometry, null, siteStyle);
+        vector_layer.addFeatures([polygonFeature]);
+    }
+
     $("#find_routes").click(function(e) {
         e.preventDefault();
         var lonlats_t=converted_lonlats();
@@ -121,6 +142,7 @@ function init() {
             async: true,
             success: function(msg) {
                 console.log(msg);
+                createPolygon(msg.routes[0]);
             }
         });
 
