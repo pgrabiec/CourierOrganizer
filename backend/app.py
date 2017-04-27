@@ -5,6 +5,7 @@ import osmapi
 from flask import Flask, jsonify
 from webargs import fields
 from webargs.flaskparser import use_args, use_kwargs
+from flask_cors import CORS, cross_origin
 
 from algorithm.core import calculate_vehicle_routes
 from models import Graph, GraphNode
@@ -14,6 +15,7 @@ app = Flask(__name__)
 
 
 @app.route("/graphs/<graph_id>/routes", methods=['post'])
+@cross_origin(origin='*')
 @use_kwargs({
     'vehicles_number': fields.Int(required=True),
     'target_points': fields.List(fields.Nested({
@@ -50,6 +52,7 @@ def calculate_route(graph_id, vehicles_number, target_points):
 
 
 @app.route('/graphs', methods=['get'])
+@cross_origin(origin='*')
 def list_graphs():
     return jsonify({
         'graphs': [{'id': str(graph.pk),
@@ -60,6 +63,7 @@ def list_graphs():
 
 
 @app.route('/graphs', methods=['post'])
+@cross_origin(origin='*')
 @use_args({
     'min_longitude': fields.Float(required=True),
     'min_latitude': fields.Float(required=True),
@@ -93,6 +97,7 @@ def create_graph(args):
 
 
 @app.route('/graphs/<graph_id>', methods=['delete'])
+@cross_origin(origin='*')
 def delete_graph(graph_id):
     """
     Removes graph from database.
