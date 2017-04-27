@@ -105,6 +105,8 @@ function init() {
         var proj1 = new OpenLayers.Projection("EPSG:4326");
         var proj2 = new OpenLayers.Projection("EPSG:900913");
         var siteStyle = {
+            fill: false,
+
         };
         for (var i = 0; i < route.length; i++){
             var point = new OpenLayers.Geometry.Point(route[i][1], route[i][0]);
@@ -142,7 +144,10 @@ function init() {
             async: true,
             success: function(msg) {
                 console.log(msg);
-                createPolygon(msg.routes[0]);
+                for (var i=0; i<msg.routes.length; i++){
+                    createPolygon(msg.routes[i]);
+                }
+
             }
         });
 
