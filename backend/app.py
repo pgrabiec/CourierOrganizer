@@ -1,5 +1,6 @@
 import requests
 from flask import Flask, jsonify
+from requests import ConnectionError
 from webargs import fields
 from webargs.flaskparser import use_kwargs
 
@@ -16,13 +17,15 @@ def get_distances_json(target_points):
             url += ";"
         append_colon = True
 
-        lat, lon = node
+        longitude, latitude = node
 
-        url += str(lat)
+        url += str(longitude)
         url += ","
-        url += str(lat)
+        url += str(latitude)
 
     url += "?generate_hints=false"
+
+    # print url
 
     request = requests.get(url)
 
@@ -38,6 +41,7 @@ def get_distances_json(target_points):
     }), required=True)
 })
 def calculate_route(vehicles_number, target_points):
+    # print "Entered"
     if len(target_points) < 1:
         return jsonify({
             'iterations': 0,
@@ -45,21 +49,29 @@ def calculate_route(vehicles_number, target_points):
             'routes': []
         })
 
-    target_points = [(point['latitude'], point['longitude'])
+    target_points = [(point['longitude'], point['latitude'])
                      for point in target_points]
 
     nodes_to_points = {}
-    target_nodes = []
+    for i in range(0, len(target_points)):
+        nodes_to_points[i] = target_points[i]
+    # print nodes_to_points
 
-    osrm_table_json = ""
+    osrm_table_json = "null"
     try:
         osrm_table_json = get_distances_json(target_points)
         distances_matrix = osrm_table_json['durations']
     except KeyError as e:
         return jsonify({'error': str(e) + "\nOSRM response: " + str(osrm_table_json)}), 400
+    except ConnectionError as e:
+        return jsonify({'error': str(e) + "\nOSRM response: " + str(osrm_table_json)}), 400
 
-    solution = calculate_vehicle_routes(target_nodes, vehicles_number,
+    # print osrm_table_json
+
+    solution = calculate_vehicle_routes(range(0, len(target_points)), vehicles_number,
                                         distances_matrix)
+
+    # print solution
 
     return jsonify({
         'iterations': solution['iterations'],

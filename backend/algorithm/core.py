@@ -32,8 +32,22 @@ def calculate_vehicle_routes(target_points,
         :param solution: [ [1, 3, 6], [2, 4, 5], ...]
         :return: int, distances sum
         """
-        return sum(sum(distances_matrix[i][j] for i, j in zip(vehicle[:-1], vehicle[1:]))
-                   for vehicle in solution)
+        # return sum(sum(distances_matrix[i][j] for i, j in zip(vehicle[:-1], vehicle[1:]))
+        #            for vehicle in solution)
+        cost = 0
+        for route in solution:
+            route_len = len(route)
+            if route_len < 1:
+                continue
+            # Distance from starting point to the first on route
+            cost += distances_matrix[0][route[0]]
+            # Distance from the last on route to the starting point
+            cost += distances_matrix[route[route_len - 1]][0]
+            # Distances between points on route
+            for index in range(0, route_len):
+                if index <= route_len - 2:
+                    cost += distances_matrix[route[index]][route[index + 1]]
+        return cost
 
     def get_random_solution(points):
         """
@@ -67,7 +81,7 @@ def calculate_vehicle_routes(target_points,
                                  for _ in range(POPULATION_NUMBER)])
 
     for i in range(MAX_ITERATIONS_NUMBER):
-        print("Cost: {}".format(cost_solution_pairs[0][0]))
+        # print("Cost: {}".format(cost_solution_pairs[0][0]))
 
         best_spots = cost_solution_pairs[0:BEST_SPOTS_NUMBER]
         good_spots = cost_solution_pairs[BEST_SPOTS_NUMBER:GOOD_SPOTS_NUMBER]
