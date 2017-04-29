@@ -77,7 +77,11 @@ def calculate_vehicle_routes(target_points,
 
     iterations = 0
 
-    cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(target_points))
+    # Starting point not included in searching for solution
+    target_points_git to_visit = copy.copy(target_points)
+    target_points_to_visit.remove(0)
+
+    cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(target_points_to_visit))
                                  for _ in range(POPULATION_NUMBER)])
 
     for i in range(MAX_ITERATIONS_NUMBER):
@@ -90,7 +94,7 @@ def calculate_vehicle_routes(target_points,
                             for spot in best_spots]
         good_spots_pairs = [get_best_from_neighbourhood(spot, GOOD_SPOT_BEES)
                             for spot in good_spots]
-        random_spots_pairs = [get_cost_solution_pair(get_random_solution(target_points))
+        random_spots_pairs = [get_cost_solution_pair(get_random_solution(target_points_to_visit))
                               for _ in range(RANDOM_SPOTS_NUMBER)]
 
         cost_solution_pairs = sorted(best_spots_pairs + good_spots_pairs + random_spots_pairs)
