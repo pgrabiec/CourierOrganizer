@@ -78,7 +78,7 @@ def calculate_vehicle_routes(target_points,
     iterations = 0
 
     # Starting point not included in searching for solution
-    target_points_git to_visit = copy.copy(target_points)
+    target_points_to_visit = copy.copy(target_points)
     target_points_to_visit.remove(0)
 
     cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(target_points_to_visit))
