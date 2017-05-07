@@ -6,7 +6,7 @@ function init() {
     var position       = new OpenLayers.LonLat(13.41,52.52).transform( fromProjection, toProjection);
     var zoom           = 10;
     var markers = new OpenLayers.Layer.Markers( "Markers" );
-    var lonlats = []
+    var lonlats = [];
     map.addLayer(markers);
     map.addLayer(mapnik);
 
@@ -53,7 +53,7 @@ function init() {
         var lonlats_t = lonlats.map(function (lonlat) {
             var l = new OpenLayers.LonLat(lonlat.lon, lonlat.lat);
             return l.transform(new OpenLayers.Projection("EPSG:900913"), new OpenLayers.Projection("EPSG:4326"));
-        })
+        });
         return lonlats_t;
     }
 
@@ -68,37 +68,17 @@ function init() {
         longitudes = lonlats_t.map(function(lonlat){
 
             return lonlat.lon;
-        })
+        });
         latitudes = lonlats_t.map(function(lonlat){
             return lonlat.lat;
-        })
+        });
         return {
             "min_longitude": Math.min.apply(Math, longitudes)-0.0001,
             "min_latitude": Math.min.apply(Math, latitudes)-0.0001,
             "max_longitude": Math.max.apply(Math, longitudes)+0.0001,
-            "max_latitude": Math.max.apply(Math, latitudes)+0.0001,
+            "max_latitude": Math.max.apply(Math, latitudes)+0.0001
         }
     }
-    var graph_id;
-    function createGraph(area) {
-        var data=JSON.stringify(area);
-        $.ajax({
-            url: 'http://localhost:5000/graphs',
-            type: 'POST',
-            data: data,
-            contentType: 'application/json;',
-            dataType: 'json',
-            async: true,
-            success: function(msg) {
-                graph_id=msg.graph_id;
-                $("#graph_id").text(graph_id);
-            }
-        });
-    }
-
-    $("#create_graph").click(function() {
-        createGraph(getArea());
-    });
 
     function createPolygon(route){
         var points = [];
@@ -133,10 +113,10 @@ function init() {
         var data = {
             "vehicles_number": $("#courier_num").val(),
             "target_points": target_points
-        }
+        };
 
         $.ajax({
-            url: 'http://localhost:5000/graphs/'+graph_id+'/routes',
+            url: 'http://localhost:5000/routes',
             type: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json;',
