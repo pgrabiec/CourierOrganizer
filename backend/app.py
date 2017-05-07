@@ -10,26 +10,11 @@ app = Flask(__name__)
 
 
 def get_distances_json(target_points):
-    url = "http://router.project-osrm.org/table/v1/driving/"
-    append_colon = False
-    for node in target_points:
-        if append_colon:
-            url += ";"
-        append_colon = True
-
-        longitude, latitude = node
-
-        url += str(longitude)
-        url += ","
-        url += str(latitude)
-
-    url += "?generate_hints=false"
-
-    # print url
-
-    request = requests.get(url)
-
-    return request.json()
+    point_strings = [','.join([str(lat), str(lon)]) for lat, lon in target_points]
+    points_param = ';'.join(point_strings)
+    url = "http://router.project-osrm.org/table/v1/driving/{}".format(points_param)
+    response = requests.get(url, data={'generate_hints': 'false'})
+    return response.json()
 
 
 @app.route("/routes", methods=['post'])
@@ -41,7 +26,6 @@ def get_distances_json(target_points):
     }), required=True)
 })
 def calculate_route(vehicles_number, target_points):
-    # print "Entered"
     if len(target_points) < 1:
         return jsonify({
             'iterations': 0,
@@ -53,11 +37,11 @@ def calculate_route(vehicles_number, target_points):
                      for point in target_points]
 
     nodes_to_points = {}
-    for i in range(0, len(target_points)):
-        nodes_to_points[i] = target_points[i]
-    # print nodes_to_points
 
-    osrm_table_json = "null"
+    for index, target_point in enumerate(target_points):
+        nodes_to_points[index] = target_point
+
+    osrm_table_json = None
     try:
         osrm_table_json = get_distances_json(target_points)
         distances_matrix = osrm_table_json['durations']
@@ -66,12 +50,8 @@ def calculate_route(vehicles_number, target_points):
     except ConnectionError as e:
         return jsonify({'error': str(e) + "\nOSRM response: " + str(osrm_table_json)}), 400
 
-    # print osrm_table_json
-
-    solution = calculate_vehicle_routes(range(0, len(target_points)), vehicles_number,
+    solution = calculate_vehicle_routes(list(range(0, len(target_points))), vehicles_number,
                                         distances_matrix)
-
-    # print solution
 
     return jsonify({
         'iterations': solution['iterations'],

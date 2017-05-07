@@ -88,7 +88,7 @@ def calculate_vehicle_routes(target_points,
         # print("Cost: {}".format(cost_solution_pairs[0][0]))
 
         best_spots = cost_solution_pairs[0:BEST_SPOTS_NUMBER]
-        good_spots = cost_solution_pairs[BEST_SPOTS_NUMBER:GOOD_SPOTS_NUMBER]
+        good_spots = cost_solution_pairs[BEST_SPOTS_NUMBER:BEST_SPOTS_NUMBER+GOOD_SPOTS_NUMBER]
 
         best_spots_pairs = [get_best_from_neighbourhood(spot, BEST_SPOT_BEES)
                             for spot in best_spots]
