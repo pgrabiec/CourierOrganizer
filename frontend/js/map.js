@@ -89,7 +89,7 @@ function init() {
 
         };
         for (var i = 0; i < route.length; i++){
-            var point = new OpenLayers.Geometry.Point(route[i][1], route[i][0]);
+            var point = new OpenLayers.Geometry.Point(route[i][0], route[i][1]);
             point.transform(proj1, proj2);
             points.push(point);
             console.log(point);
