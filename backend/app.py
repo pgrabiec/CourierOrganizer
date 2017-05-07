@@ -3,6 +3,7 @@ from flask import Flask, jsonify
 from requests import ConnectionError
 from webargs import fields
 from webargs.flaskparser import use_kwargs
+from flask_cors import CORS, cross_origin
 
 from algorithm.core import calculate_vehicle_routes
 
@@ -18,6 +19,7 @@ def get_distances_json(target_points):
 
 
 @app.route("/routes", methods=['post'])
+@cross_origin(origin='*')
 @use_kwargs({
     'vehicles_number': fields.Int(required=True),
     'target_points': fields.List(fields.Nested({
