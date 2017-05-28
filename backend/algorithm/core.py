@@ -1,3 +1,4 @@
+import time
 import copy
 import random
 
@@ -32,22 +33,23 @@ def calculate_vehicle_routes(target_points,
         :param solution: [ [1, 3, 6], [2, 4, 5], ...]
         :return: int, distances sum
         """
-        # return sum(sum(distances_matrix[i][j] for i, j in zip(vehicle[:-1], vehicle[1:]))
-        #            for vehicle in solution)
-        cost = 0
+        routes_costs = []
         for route in solution:
+            route_cost = 0
             route_len = len(route)
             if route_len < 1:
                 continue
             # Distance from starting point to the first on route
-            cost += distances_matrix[0][route[0]]
+            route_cost += distances_matrix[0][route[0]]
             # Distance from the last on route to the starting point
-            cost += distances_matrix[route[route_len - 1]][0]
+            route_cost += distances_matrix[route[route_len - 1]][0]
             # Distances between points on route
             for index in range(0, route_len):
                 if index <= route_len - 2:
-                    cost += distances_matrix[route[index]][route[index + 1]]
-        return cost
+                    route_cost += distances_matrix[route[index]][route[index + 1]]
+
+            routes_costs.append(route_cost)
+        return max(routes_costs)
 
     def get_random_solution(points):
         """
@@ -73,9 +75,12 @@ def calculate_vehicle_routes(target_points,
         return min([get_cost_solution_pair(modify_solution(solution,
                                                            len(target_points),
                                                            get_solution_cost))
-                    for _ in range(search_size)] + [cost_solution_pair])
+                    for _ in range(search_size)] + [cost_solution_pair], key=lambda x: x[0])
 
     iterations = 0
+    last_improvement_iteration = 0
+    last_cost = None
+    start_time = time.time()
 
     # Starting point not included in searching for solution
     target_points_to_visit = copy.copy(target_points)
@@ -84,8 +89,8 @@ def calculate_vehicle_routes(target_points,
     cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(target_points_to_visit))
                                  for _ in range(POPULATION_NUMBER)])
 
-    for i in range(MAX_ITERATIONS_NUMBER):
-        # print("Cost: {}".format(cost_solution_pairs[0][0]))
+    for i in range(1, MAX_ITERATIONS_NUMBER+1):
+        print("Cost: {}".format(cost_solution_pairs[0][0]))
 
         best_spots = cost_solution_pairs[0:BEST_SPOTS_NUMBER]
         good_spots = cost_solution_pairs[BEST_SPOTS_NUMBER:BEST_SPOTS_NUMBER+GOOD_SPOTS_NUMBER]
@@ -101,10 +106,19 @@ def calculate_vehicle_routes(target_points,
 
         iterations = i
 
+        cost = cost_solution_pairs[0][0]
+        if not last_cost:
+            last_cost = cost
+        elif cost < last_cost:
+            last_improvement_iteration = i
+            last_cost = cost
+
     cost, solution = cost_solution_pairs[0]
 
     return {
-        'iterations': iterations,
+        'total_iterations': iterations,
+        'min_iterations': last_improvement_iteration,
         'cost': cost,
         'routes': solution,
+        'real_time': time.time() - start_time,
     }

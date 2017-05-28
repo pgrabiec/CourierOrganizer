@@ -1,9 +1,9 @@
-from copy import copy
+from copy import deepcopy
 import random
 
 
 def modify_solution(solution, *args, **kwargs):
-    solution = copy(solution)
+    solution = deepcopy(solution)
     if random.random() < 0.5:
         salesman_index = random.randint(0, len(solution)-1)
 

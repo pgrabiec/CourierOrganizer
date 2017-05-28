@@ -56,8 +56,10 @@ def calculate_route(vehicles_number, target_points):
                                         distances_matrix)
 
     return jsonify({
-        'iterations': solution['iterations'],
+        'total_iterations': solution['total_iterations'],
         'cost': solution['cost'],
+        'real_time': solution['real_time'],
+        'min_iterations': solution['min_iterations'],
         'routes': [[nodes_to_points[node] for node in route]
                    for route in solution['routes']]
     })
