@@ -2,12 +2,6 @@ import time
 import copy
 import random
 
-from settings import (
-    POPULATION_NUMBER, MAX_ITERATIONS_NUMBER, BEST_SPOTS_NUMBER,
-    GOOD_SPOTS_NUMBER, RANDOM_SPOTS_NUMBER,
-    BEST_SPOT_BEES, GOOD_SPOT_BEES
-)
-
 from .modifiers.simple import modify_solution as modify_solution_simple
 
 
@@ -24,10 +18,18 @@ def random_ranges(number_of_ranges, max_r):
 def calculate_vehicle_routes(target_points,
                              vehicles_number,
                              distances_matrix,
-                             modify_solution=modify_solution_simple):
+                             modify_solution=modify_solution_simple,
+                             found_better_solution_callback=lambda iteration, cost: (),
+                             BEST_SPOTS_NUMBER=10,
+                             GOOD_SPOTS_NUMBER=5,
+                             RANDOM_SPOTS_NUMBER=3,
+                             BEST_SPOT_BEES=10,
+                             GOOD_SPOT_BEES=5,
+                             MAX_ITERATIONS_NUMBER=800):
     """
     Bees pham algorithm
     """
+
     def get_solution_cost(solution):
         """
         :param solution: [ [1, 3, 6], [2, 4, 5], ...]
@@ -77,6 +79,8 @@ def calculate_vehicle_routes(target_points,
                                                            get_solution_cost))
                     for _ in range(search_size)] + [cost_solution_pair], key=lambda x: x[0])
 
+    POPULATION_NUMBER = BEST_SPOTS_NUMBER + GOOD_SPOTS_NUMBER + RANDOM_SPOTS_NUMBER
+
     iterations = 0
     last_improvement_iteration = 0
     last_cost = None
@@ -87,13 +91,20 @@ def calculate_vehicle_routes(target_points,
     target_points_to_visit.remove(0)
 
     cost_solution_pairs = sorted([get_cost_solution_pair(get_random_solution(target_points_to_visit))
-                                 for _ in range(POPULATION_NUMBER)])
+                                  for _ in range(POPULATION_NUMBER)])
 
-    for i in range(1, MAX_ITERATIONS_NUMBER+1):
-        print("Cost: {}".format(cost_solution_pairs[0][0]))
+    cost, _ = cost_solution_pairs[0]
+    found_better_solution_callback(0, cost)
+
+    improvement_resolution = 5
+    since_improvement = improvement_resolution + 1
+
+    for i in range(1, MAX_ITERATIONS_NUMBER + 1):
+        since_improvement += 1
+        # print("Cost: {}".format(cost_solution_pairs[0][0]))
 
         best_spots = cost_solution_pairs[0:BEST_SPOTS_NUMBER]
-        good_spots = cost_solution_pairs[BEST_SPOTS_NUMBER:BEST_SPOTS_NUMBER+GOOD_SPOTS_NUMBER]
+        good_spots = cost_solution_pairs[BEST_SPOTS_NUMBER:BEST_SPOTS_NUMBER + GOOD_SPOTS_NUMBER]
 
         best_spots_pairs = [get_best_from_neighbourhood(spot, BEST_SPOT_BEES)
                             for spot in best_spots]
@@ -106,14 +117,19 @@ def calculate_vehicle_routes(target_points,
 
         iterations = i
 
-        cost = cost_solution_pairs[0][0]
+        cost, solution = cost_solution_pairs[0]
         if not last_cost:
             last_cost = cost
         elif cost < last_cost:
             last_improvement_iteration = i
             last_cost = cost
+            if since_improvement > improvement_resolution:
+                found_better_solution_callback(i, cost)
+                since_improvement = 0
 
     cost, solution = cost_solution_pairs[0]
+
+    found_better_solution_callback(iterations, cost)
 
     return {
         'total_iterations': iterations,
