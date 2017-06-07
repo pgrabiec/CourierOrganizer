@@ -80,13 +80,14 @@ function init() {
         }
     }
 
-    function createPolygon(route){
+    function createPolygon(route, color){
         var points = [];
         var proj1 = new OpenLayers.Projection("EPSG:4326");
         var proj2 = new OpenLayers.Projection("EPSG:900913");
         var siteStyle = {
             fill: false,
-
+            strokeColor: color,
+            strokeWidth: 3
         };
         for (var i = 0; i < route.length; i++){
             var point = new OpenLayers.Geometry.Point(route[i][0], route[i][1]);
@@ -99,6 +100,7 @@ function init() {
         var polygonFeature = new OpenLayers.Feature.Vector(geometry, null, siteStyle);
         vector_layer.addFeatures([polygonFeature]);
     }
+    var colors = ["#ff3030", "#762767", "#eb8c00", "#0e808b", "#292b12", "#ffaeb9", "#ffb5da", "#b5b9c2", "#f0fff0"]
 
     $("#find_routes").click(function(e) {
         e.preventDefault();
@@ -108,7 +110,7 @@ function init() {
                 'latitude': lonlat.lat,
                 'longitude': lonlat.lon
             }
-        })
+        });
 
         var data = {
             "vehicles_number": $("#courier_num").val(),
@@ -124,10 +126,17 @@ function init() {
             async: true,
             success: function(msg) {
                 console.log(msg);
+                vector_layer.removeAllFeatures();
                 for (var i=0; i<msg.routes.length; i++){
-                    createPolygon(msg.routes[i]);
+                    var route = [[target_points[0].longitude, target_points[0].latitude]];
+                    route = route.concat(msg.routes[i]);
+                    createPolygon(route, colors[i%colors.length]);
                 }
 
+                $("#summary_cost").text("Cost: "+msg.cost.toString());
+                $("#summary_min_iter").text("Min iterations: "+ msg.min_iterations.toString());
+                $("#summary_iter").text("Iterations: "+ msg.total_iterations.toString());
+                $("#summary_time").text("Real time: "+ msg.real_time.toString());
             }
         });
 
